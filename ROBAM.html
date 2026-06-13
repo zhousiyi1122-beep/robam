@@ -289,6 +289,7 @@ body{height:100%;font-family:'Nunito',sans-serif;background:var(--bg);color:var(
         <span class="conn-dot" id="conn-dot"></span>
         <span style="font-size:10px;color:#94a3b8;font-weight:600" id="conn-txt">Offline</span>
       </div>
+      <span id="env-badge" style="display:none;background:#f59e0b;color:#fff;font-size:9px;font-weight:800;padding:2px 6px;border-radius:10px;letter-spacing:.5px">TEST</span>
       <button class="sync-btn" id="sync-btn" onclick="syncNow()">☁️ Sync</button>
     </div>
   </div>
@@ -505,7 +506,19 @@ body{height:100%;font-family:'Nunito',sans-serif;background:var(--bg);color:var(
           </div>
           <div class="lrow" onclick="syncNow()"><div class="lr-ic lr-b">☁️</div><div class="lr-main"><div class="lr-name">Sync Now</div><div class="lr-sub">Load latest data from Google Sheets</div></div></div>
           <div class="lrow" onclick="goTo('backup')"><div class="lr-ic lr-g">🗄️</div><div class="lr-main"><div class="lr-name">Backup & Restore</div><div class="lr-sub">Export backup or restore from file</div></div><span style="color:var(--ink3);font-size:20px">›</span></div>
-          <div class="lrow" onclick="changeUrl()"><div class="lr-ic lr-a">🔗</div><div class="lr-main"><div class="lr-name">Change Connection</div><div class="lr-sub">Update Google Apps Script URL</div></div></div>
+          <!-- ENV SWITCHER -->
+          <div style="padding:14px 0 6px">
+            <div style="font-size:11px;font-weight:700;color:var(--ink3);letter-spacing:.5px;margin-bottom:10px">GOOGLE SHEETS CONNECTION</div>
+            <div style="display:flex;gap:8px;margin-bottom:12px">
+              <button id="env-btn-prod" onclick="switchEnv('prod')" style="flex:1;padding:9px;border-radius:10px;border:2px solid #3b82f6;background:#3b82f6;color:#fff;font-weight:700;font-size:13px;cursor:pointer">🏭 Production</button>
+              <button id="env-btn-test" onclick="switchEnv('test')" style="flex:1;padding:9px;border-radius:10px;border:2px solid #94a3b8;background:transparent;color:#64748b;font-weight:700;font-size:13px;cursor:pointer">🧪 Test</button>
+            </div>
+            <div id="env-url-row">
+              <input id="env-url-input" class="fi" style="font-size:12px" placeholder="Paste Google Apps Script URL…">
+              <button onclick="saveEnvUrl()" style="width:100%;padding:13px;background:var(--acc-b);color:#fff;border:none;border-radius:12px;font-weight:700;font-size:15px;cursor:pointer;margin-top:4px">🔗 Connect</button>
+            </div>
+            <div id="env-url-hint" style="font-size:11px;color:var(--ink3);margin-top:6px"></div>
+          </div>
           <div class="lrow" onclick="goTo('install')"><div class="lr-ic lr-p">📋</div><div class="lr-main"><div class="lr-name">Installation Guide</div><div class="lr-sub">Setup & connection instructions</div></div><span style="color:var(--ink3);font-size:20px">›</span></div>
         </div>
       </div>
@@ -749,7 +762,8 @@ body{height:100%;font-family:'Nunito',sans-serif;background:var(--bg);color:var(
 // STATE
 // ══════════════════════════════════════
 let DB={products:[],inbound:[],outbound:[],transfers:[],invoices:[],adjustments:[],categories:['Office','Safety','Tools','Packaging','Electronics','Cleaning','Other'],branches:['Main Branch','Warehouse A','Warehouse B'],departments:['Admin','Sales','Production','Warehouse','Logistics','Management','IT'],company:{}};
-let GS_URL='https://script.google.com/macros/s/AKfycbxR-DWHAqc2hVlL0xxiROXZBJ72IaZ7vCr7NgWMi9mwj0iXQi79pDRfQWaEmDR6WKAe/exec';
+let GS_URL='';
+let APP_ENV='prod'; // 'prod' or 'test'
 let editPId=null,ivItems=[];
 let pendingSave=false,saveTimer=null;
 
@@ -937,12 +951,16 @@ async function loadFromGS(){
     renderDash();updateLNb();
   }catch(e){
     hideLoading();
-    setConn('err','Error');
+    const msg=e.message||'Unknown error';
+    setConn('err', msg.length>22 ? 'Load failed' : msg);
     console.error('Load error:',e);
-    // Show connection error on dashboard instead of blocking alert
+    // Update More page hint with real reason
+    const hint=document.getElementById('env-url-hint');
+    if(hint) hint.innerHTML=`❌ <strong>Failed:</strong> ${msg}<br><span style="font-size:10px;color:#94a3b8">Check URL is correct and deployment is set to <em>Anyone</em> access.</span>`;
+    // Show connection error on dashboard
     document.getElementById('d-hint').innerHTML=`<div class="alert al-r">
-      ❌ <strong>Connection failed:</strong> ${e.message}<br>
-      <span style="font-size:11px">Go to More → Sync Now to retry, or More → Change Connection to update URL.</span>
+      ❌ <strong>Connection failed:</strong> ${msg}<br>
+      <span style="font-size:11px">Go to More → check URL and tap Connect again.</span>
     </div>`;
     renderDash();
   }
@@ -986,8 +1004,64 @@ async function syncNow(){
 }
 
 function changeUrl(){
-  const url=prompt('Paste your Google Apps Script Web App URL:',GS_URL||'');
-  if(url&&url.trim()){localStorage.setItem('wp_gs_url',url.trim());GS_URL=url.trim();loadFromGS();}
+  // Legacy entry point — now opens More page
+  goTo('more');
+}
+
+function updateEnvBadge(){
+  const badge=document.getElementById('env-badge');
+  if(badge) badge.style.display = APP_ENV==='test' ? 'inline-block' : 'none';
+  // Update More page button styles if visible
+  const bProd=document.getElementById('env-btn-prod');
+  const bTest=document.getElementById('env-btn-test');
+  if(bProd && bTest){
+    if(APP_ENV==='prod'){
+      bProd.style.background='#3b82f6';bProd.style.color='#fff';bProd.style.borderColor='#3b82f6';
+      bTest.style.background='transparent';bTest.style.color='#64748b';bTest.style.borderColor='#94a3b8';
+    } else {
+      bTest.style.background='#f59e0b';bTest.style.color='#fff';bTest.style.borderColor='#f59e0b';
+      bProd.style.background='transparent';bProd.style.color='#64748b';bProd.style.borderColor='#94a3b8';
+    }
+  }
+  // Populate URL input with current env URL
+  const inp=document.getElementById('env-url-input');
+  const hint=document.getElementById('env-url-hint');
+  const savedUrl=localStorage.getItem('wp_gs_url_'+APP_ENV)||'';
+  if(inp) inp.value=savedUrl;
+  if(hint) hint.textContent = savedUrl
+    ? (APP_ENV==='prod' ? '✅ Production URL saved — tap Connect to reload' : '🧪 Test URL saved — tap Connect to reload')
+    : (APP_ENV==='prod' ? '⚠️ No production URL saved yet' : '⚠️ No test URL saved yet — paste one above');
+}
+
+function switchEnv(env){
+  if(APP_ENV===env) return;
+  APP_ENV=env;
+  localStorage.setItem('wp_env', env);
+  GS_URL=localStorage.getItem('wp_gs_url_'+env)||'';
+  updateEnvBadge();
+  if(GS_URL){
+    loadFromGS();
+  } else {
+    DB={products:[],inbound:[],outbound:[],transfers:[],invoices:[],adjustments:[],categories:DB.categories,branches:DB.branches,departments:DB.departments,company:DB.company};
+    setConn('err','Not connected');
+    renderDash();
+    alert('No URL saved for '+(env==='test'?'Test':'Production')+' yet.\nPaste the Google Apps Script URL below and tap Connect.');
+  }
+}
+
+function saveEnvUrl(){
+  const inp=document.getElementById('env-url-input');
+  const url=(inp&&inp.value||'').trim();
+  if(!url){alert('Please paste a Google Apps Script URL first.');return;}
+  if(!url.startsWith('https://script.google.com/')){
+    alert('That doesn\'t look like a Google Apps Script URL.\nIt should start with https://script.google.com/');
+    return;
+  }
+  localStorage.setItem('wp_gs_url_'+APP_ENV, url);
+  localStorage.setItem('wp_gs_url', url); // keep legacy key in sync with current env
+  GS_URL=url;
+  updateEnvBadge();
+  loadFromGS();
 }
 
 // ══════════════════════════════════════
@@ -999,7 +1073,7 @@ function goTo(p){
   const g=document.getElementById('pg-'+p);if(g)g.classList.add('on');
   const b=document.querySelector(`.bn[data-p="${p}"]`);if(b)b.classList.add('on');
   document.getElementById('pg-title').textContent=titles[p]||p;
-  ({dashboard:renderDash,products:renderProds,stock:()=>{fillDs();renderStk();},install:()=>{},backup:()=>{renderBackupPage();},adjustments:()=>{fillAdjDropdowns();renderAdjList();showAdjStock();const el=document.getElementById('adj-no');if(el&&!el.value)el.value=autoNo('ADJ',DB.adjustments);},inbound:()=>{fillDs();renderIbList();const el=document.getElementById('ib-no');if(el&&!el.value)el.value=autoNo('IN',DB.inbound);},outbound:()=>{fillDs();renderObList();const el=document.getElementById('ob-no');if(el&&!el.value)el.value=autoNo('OUT',DB.outbound);},transfer:()=>{fillDs();renderTrList();const el=document.getElementById('tr-no');if(el&&!el.value)el.value=autoNo('TRF',DB.transfers);},invoice:()=>{fillDs();if(!ivInited){ivInited=true;const set=(k,v)=>{const el=document.getElementById(k);if(el)el.value=v;};set('iv-no',nextNo());set('iv-date',td());set('iv-due',addD(td(),30));set('iv-type','TAX INVOICE');set('iv-gst','0.10');set('iv-status','pending');}renderIvF();},invoices:renderInvHist,categories:renderCats,branches:renderBranches,departments:()=>{renderDepts();},company:loadCo})[p]?.();
+  ({dashboard:renderDash,products:renderProds,stock:()=>{fillDs();renderStk();},install:()=>{},backup:()=>{renderBackupPage();},adjustments:()=>{fillAdjDropdowns();renderAdjList();showAdjStock();const el=document.getElementById('adj-no');if(el&&!el.value)el.value=autoNo('ADJ',DB.adjustments);},inbound:()=>{fillDs();renderIbList();const el=document.getElementById('ib-no');if(el&&!el.value)el.value=autoNo('IN',DB.inbound);},outbound:()=>{fillDs();renderObList();const el=document.getElementById('ob-no');if(el&&!el.value)el.value=autoNo('OUT',DB.outbound);},transfer:()=>{fillDs();renderTrList();const el=document.getElementById('tr-no');if(el&&!el.value)el.value=autoNo('TRF',DB.transfers);},invoice:()=>{fillDs();if(!ivInited){ivInited=true;const set=(k,v)=>{const el=document.getElementById(k);if(el)el.value=v;};set('iv-no',nextNo());set('iv-date',td());set('iv-due',addD(td(),30));set('iv-type','TAX INVOICE');set('iv-gst','0.10');set('iv-status','pending');}renderIvF();},invoices:renderInvHist,categories:renderCats,branches:renderBranches,departments:()=>{renderDepts();},company:loadCo,more:()=>{updateEnvBadge();}})[p]?.();
 }
 
 // ══════════════════════════════════════
@@ -1717,22 +1791,28 @@ function removeLogo(){if(!confirm('Remove logo?'))return;DB.company.logo='';loca
 // INIT
 // ══════════════════════════════════════
 document.addEventListener('DOMContentLoaded', () => {
-  // Load URL: use localStorage if available, otherwise use hardcoded default
-  const savedUrl = localStorage.getItem('wp_gs_url') || 'https://script.google.com/macros/s/AKfycbxR-DWHAqc2hVlL0xxiROXZBJ72IaZ7vCr7NgWMi9mwj0iXQi79pDRfQWaEmDR6WKAe/exec';
-  GS_URL = savedUrl;
-  // Always keep localStorage in sync so it persists
-  localStorage.setItem('wp_gs_url', GS_URL);
+  // Restore environment (prod/test)
+  APP_ENV = localStorage.getItem('wp_env') || 'prod';
+
+  // Load URL for current env; fall back to legacy wp_gs_url key for existing users
+  GS_URL = localStorage.getItem('wp_gs_url_' + APP_ENV) || localStorage.getItem('wp_gs_url') || '';
+
+  // Migrate legacy key once into the prod slot
+  if (!localStorage.getItem('wp_gs_url_prod') && localStorage.getItem('wp_gs_url')) {
+    localStorage.setItem('wp_gs_url_prod', localStorage.getItem('wp_gs_url'));
+  }
 
   // Load saved logo
   const logo = localStorage.getItem('wp_logo');
   if (logo) DB.company.logo = logo;
 
+  updateEnvBadge();
   renderDash();
   document.querySelectorAll('input[type=date]').forEach(el => {
     if (!el.value) el.value = td();
   });
 
-  // Connect automatically
+  // Connect automatically only if a URL is saved
   if (GS_URL) {
     setTimeout(() => loadFromGS(), 300);
   } else {
