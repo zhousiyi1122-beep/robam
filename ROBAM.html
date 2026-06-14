@@ -1821,12 +1821,63 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 </script>
 <script>
-// Register Service Worker for PWA
+// ── INLINE SERVICE WORKER (no separate sw.js needed) ──────────────────
+// Version is baked in here — change it whenever you deploy a new HTML.
+const SW_VERSION = 'ROBAM-v20250614-001';
+
 if('serviceWorker' in navigator){
-  window.addEventListener('load', ()=>{
-    navigator.serviceWorker.register('sw.js')
-      .then(reg=>console.log('SW registered:', reg.scope))
-      .catch(err=>console.log('SW error:', err));
+  // Build the SW script as a string so it lives inside this HTML file
+  const swCode = `
+const CACHE = '${SW_VERSION}';
+const HTML_URL = self.location.origin + self.location.pathname.replace(/\\/sw-inline\\.js.*$/, '') + 'ROBAM.html';
+
+// On install: cache the app shell and skip waiting immediately
+self.addEventListener('install', e => {
+  e.waitUntil(
+    caches.open(CACHE).then(c => c.addAll(['/ROBAM.html', '/'])).catch(()=>{})
+  );
+  self.skipWaiting();
+});
+
+// On activate: delete ALL old caches so stale content is gone
+self.addEventListener('activate', e => {
+  e.waitUntil(
+    caches.keys().then(keys =>
+      Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k)))
+    ).then(() => self.clients.claim())
+  );
+});
+
+// Fetch: network-first so updates are always picked up; fall back to cache
+self.addEventListener('fetch', e => {
+  if(e.request.method !== 'GET') return;
+  e.respondWith(
+    fetch(e.request).then(res => {
+      const clone = res.clone();
+      caches.open(CACHE).then(c => c.put(e.request, clone));
+      return res;
+    }).catch(() => caches.match(e.request))
+  );
+});
+`;
+
+  const blob = new Blob([swCode], {type:'application/javascript'});
+  const swUrl = URL.createObjectURL(blob);
+
+  window.addEventListener('load', () => {
+    // Unregister any old sw.js registration first
+    navigator.serviceWorker.getRegistrations().then(regs => {
+      regs.forEach(reg => {
+        if(reg.active && reg.active.scriptURL.includes('sw.js')) reg.unregister();
+      });
+    });
+    navigator.serviceWorker.register(swUrl, {scope:'/'})
+      .then(reg => {
+        console.log('Inline SW registered, version:', SW_VERSION);
+        // Force update check on every load
+        reg.update();
+      })
+      .catch(err => console.log('SW error:', err));
   });
 }
 
@@ -1835,7 +1886,6 @@ let deferredPrompt;
 window.addEventListener('beforeinstallprompt', e=>{
   e.preventDefault();
   deferredPrompt=e;
-  // Show install button if not already installed
   const installBtn=document.getElementById('install-btn');
   if(installBtn)installBtn.style.display='flex';
 });
