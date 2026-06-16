@@ -12,9 +12,9 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="ROBAM">
-<link rel="apple-touch-icon" href="icon-192.png">
-<link rel="icon" href="icon-192.png">
 <link rel="manifest" href="manifest.json">
+<!-- Apple touch icons -->
+<link rel="apple-touch-icon" href="icon-192.png">
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
@@ -289,7 +289,6 @@ body{height:100%;font-family:'Nunito',sans-serif;background:var(--bg);color:var(
         <span class="conn-dot" id="conn-dot"></span>
         <span style="font-size:10px;color:#94a3b8;font-weight:600" id="conn-txt">Offline</span>
       </div>
-      <span id="env-badge" style="display:none;background:#f59e0b;color:#fff;font-size:9px;font-weight:800;padding:2px 6px;border-radius:10px;letter-spacing:.5px">TEST</span>
       <button class="sync-btn" id="sync-btn" onclick="syncNow()">☁️ Sync</button>
     </div>
   </div>
@@ -449,8 +448,9 @@ body{height:100%;font-family:'Nunito',sans-serif;background:var(--bg);color:var(
           <div class="iitems" id="iv-items"></div>
           <button class="add-item-btn" onclick="addIvItem()">＋ Add Line Item</button>
           <div class="totals-box">
-            <div class="tot-row"><span>Subtotal (excl. GST)</span><span class="v" id="iv-sub">A$0.00</span></div>
+            <div class="tot-row"><span>Subtotal</span><span class="v" id="iv-sub">A$0.00</span></div>
             <div class="tot-row" id="iv-disc-row" style="display:none"><span id="iv-disc-lbl">Discount</span><span class="v" style="color:#f87171" id="iv-disc-amt">-A$0.00</span></div>
+            <div class="tot-row"><span>Total Amount</span><span class="v" id="iv-after-disc">A$0.00</span></div>
             <div class="tot-row"><span id="iv-gstlbl">GST (10%)</span><span class="v" id="iv-gstamt">A$0.00</span></div>
             <div class="tot-grand"><span>Total Due</span><span class="v" id="iv-total">A$0.00</span></div>
           </div>
@@ -506,19 +506,7 @@ body{height:100%;font-family:'Nunito',sans-serif;background:var(--bg);color:var(
           </div>
           <div class="lrow" onclick="syncNow()"><div class="lr-ic lr-b">☁️</div><div class="lr-main"><div class="lr-name">Sync Now</div><div class="lr-sub">Load latest data from Google Sheets</div></div></div>
           <div class="lrow" onclick="goTo('backup')"><div class="lr-ic lr-g">🗄️</div><div class="lr-main"><div class="lr-name">Backup & Restore</div><div class="lr-sub">Export backup or restore from file</div></div><span style="color:var(--ink3);font-size:20px">›</span></div>
-          <!-- ENV SWITCHER -->
-          <div style="padding:14px 0 6px">
-            <div style="font-size:11px;font-weight:700;color:var(--ink3);letter-spacing:.5px;margin-bottom:10px">GOOGLE SHEETS CONNECTION</div>
-            <div style="display:flex;gap:8px;margin-bottom:12px">
-              <button id="env-btn-prod" onclick="switchEnv('prod')" style="flex:1;padding:9px;border-radius:10px;border:2px solid #3b82f6;background:#3b82f6;color:#fff;font-weight:700;font-size:13px;cursor:pointer">🏭 Production</button>
-              <button id="env-btn-test" onclick="switchEnv('test')" style="flex:1;padding:9px;border-radius:10px;border:2px solid #94a3b8;background:transparent;color:#64748b;font-weight:700;font-size:13px;cursor:pointer">🧪 Test</button>
-            </div>
-            <div id="env-url-row">
-              <input id="env-url-input" class="fi" style="font-size:12px" placeholder="Paste Google Apps Script URL…">
-              <button onclick="saveEnvUrl()" style="width:100%;padding:13px;background:var(--acc-b);color:#fff;border:none;border-radius:12px;font-weight:700;font-size:15px;cursor:pointer;margin-top:4px">🔗 Connect</button>
-            </div>
-            <div id="env-url-hint" style="font-size:11px;color:var(--ink3);margin-top:6px"></div>
-          </div>
+          <div class="lrow" onclick="changeUrl()"><div class="lr-ic lr-a">🔗</div><div class="lr-main"><div class="lr-name">Change Connection</div><div class="lr-sub">Update Google Apps Script URL</div></div></div>
           <div class="lrow" onclick="goTo('install')"><div class="lr-ic lr-p">📋</div><div class="lr-main"><div class="lr-name">Installation Guide</div><div class="lr-sub">Setup & connection instructions</div></div><span style="color:var(--ink3);font-size:20px">›</span></div>
         </div>
       </div>
@@ -718,7 +706,6 @@ body{height:100%;font-family:'Nunito',sans-serif;background:var(--bg);color:var(
           <div class="fg"><label class="fl">Account Name</label><input class="fi" id="co-accname" placeholder="Your Company Pty Ltd"></div>
           <div class="fg2"><div class="fg"><label class="fl">BSB</label><input class="fi mono" id="co-bsb" placeholder="062-000"></div><div class="fg"><label class="fl">Account No.</label><input class="fi mono" id="co-acc" placeholder="12345678"></div></div>
           <div class="fg2"><div class="fg"><label class="fl">Website</label><input class="fi" id="co-web" placeholder="www.company.com.au"></div><div class="fg"><label class="fl">Invoice Prefix</label><input class="fi mono" id="co-prefix" placeholder="INV"></div></div>
-          <div class="fg"><label class="fl">Terms &amp; Conditions</label><textarea class="fi" id="co-tac" rows="5" placeholder="e.g. Goods remain property of seller until paid in full. Late payments incur 2% monthly interest..." style="resize:vertical;font-size:13px;line-height:1.5"></textarea></div>
           <div class="fsec">Company Logo</div>
           <input type="file" id="co-logo-file" accept="image/*" onchange="uploadLogo(this)">
           <div id="logo-prev" style="background:var(--bg);border-radius:10px;padding:16px;min-height:68px;display:flex;align-items:center;justify-content:center;color:var(--ink3);font-size:13px;font-weight:600;margin-bottom:10px">No logo uploaded</div>
@@ -763,8 +750,7 @@ body{height:100%;font-family:'Nunito',sans-serif;background:var(--bg);color:var(
 // STATE
 // ══════════════════════════════════════
 let DB={products:[],inbound:[],outbound:[],transfers:[],invoices:[],adjustments:[],categories:['Office','Safety','Tools','Packaging','Electronics','Cleaning','Other'],branches:['Main Branch','Warehouse A','Warehouse B'],departments:['Admin','Sales','Production','Warehouse','Logistics','Management','IT'],company:{}};
-let GS_URL='';
-let APP_ENV='prod'; // 'prod' or 'test'
+let GS_URL='https://script.google.com/macros/s/AKfycbxR-DWHAqc2hVlL0xxiROXZBJ72IaZ7vCr7NgWMi9mwj0iXQi79pDRfQWaEmDR6WKAe/exec';
 let editPId=null,ivItems=[];
 let pendingSave=false,saveTimer=null;
 
@@ -785,7 +771,7 @@ const fDT=d=>{
   return fD(s);
 };
 const str=v=>(v==null)?'':String(v);
-const fD=d=>{try{const[y,m,dy]=d.split('-');const mo=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];return mo[+m-1]+' '+parseInt(dy)+', '+y;}catch(e){return d||'—';}};
+const fD=d=>{try{if(!d)return'—';const datePart=(d+'').split('T')[0].split(' ')[0];const[y,m,dy]=datePart.split('-');const mo=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];const label=mo[+m-1];return label?label+' '+parseInt(dy)+', '+y:d;}catch(e){return d||'—';}};
 const gSt=p=>{
   const i=DB.inbound.filter(r=>r.prodId===p.id).reduce((t,r)=>t+Number(r.qty||0),0);
   const o=DB.outbound.filter(r=>r.prodId===p.id).reduce((t,r)=>t+Number(r.qty||0),0);
@@ -952,16 +938,12 @@ async function loadFromGS(){
     renderDash();updateLNb();
   }catch(e){
     hideLoading();
-    const msg=e.message||'Unknown error';
-    setConn('err', msg.length>22 ? 'Load failed' : msg);
+    setConn('err','Error');
     console.error('Load error:',e);
-    // Update More page hint with real reason
-    const hint=document.getElementById('env-url-hint');
-    if(hint) hint.innerHTML=`❌ <strong>Failed:</strong> ${msg}<br><span style="font-size:10px;color:#94a3b8">Check URL is correct and deployment is set to <em>Anyone</em> access.</span>`;
-    // Show connection error on dashboard
+    // Show connection error on dashboard instead of blocking alert
     document.getElementById('d-hint').innerHTML=`<div class="alert al-r">
-      ❌ <strong>Connection failed:</strong> ${msg}<br>
-      <span style="font-size:11px">Go to More → check URL and tap Connect again.</span>
+      ❌ <strong>Connection failed:</strong> ${e.message}<br>
+      <span style="font-size:11px">Go to More → Sync Now to retry, or More → Change Connection to update URL.</span>
     </div>`;
     renderDash();
   }
@@ -1005,64 +987,8 @@ async function syncNow(){
 }
 
 function changeUrl(){
-  // Legacy entry point — now opens More page
-  goTo('more');
-}
-
-function updateEnvBadge(){
-  const badge=document.getElementById('env-badge');
-  if(badge) badge.style.display = APP_ENV==='test' ? 'inline-block' : 'none';
-  // Update More page button styles if visible
-  const bProd=document.getElementById('env-btn-prod');
-  const bTest=document.getElementById('env-btn-test');
-  if(bProd && bTest){
-    if(APP_ENV==='prod'){
-      bProd.style.background='#3b82f6';bProd.style.color='#fff';bProd.style.borderColor='#3b82f6';
-      bTest.style.background='transparent';bTest.style.color='#64748b';bTest.style.borderColor='#94a3b8';
-    } else {
-      bTest.style.background='#f59e0b';bTest.style.color='#fff';bTest.style.borderColor='#f59e0b';
-      bProd.style.background='transparent';bProd.style.color='#64748b';bProd.style.borderColor='#94a3b8';
-    }
-  }
-  // Populate URL input with current env URL
-  const inp=document.getElementById('env-url-input');
-  const hint=document.getElementById('env-url-hint');
-  const savedUrl=localStorage.getItem('wp_gs_url_'+APP_ENV)||'';
-  if(inp) inp.value=savedUrl;
-  if(hint) hint.textContent = savedUrl
-    ? (APP_ENV==='prod' ? '✅ Production URL saved — tap Connect to reload' : '🧪 Test URL saved — tap Connect to reload')
-    : (APP_ENV==='prod' ? '⚠️ No production URL saved yet' : '⚠️ No test URL saved yet — paste one above');
-}
-
-function switchEnv(env){
-  if(APP_ENV===env) return;
-  APP_ENV=env;
-  localStorage.setItem('wp_env', env);
-  GS_URL=localStorage.getItem('wp_gs_url_'+env)||'';
-  updateEnvBadge();
-  if(GS_URL){
-    loadFromGS();
-  } else {
-    DB={products:[],inbound:[],outbound:[],transfers:[],invoices:[],adjustments:[],categories:DB.categories,branches:DB.branches,departments:DB.departments,company:DB.company};
-    setConn('err','Not connected');
-    renderDash();
-    alert('No URL saved for '+(env==='test'?'Test':'Production')+' yet.\nPaste the Google Apps Script URL below and tap Connect.');
-  }
-}
-
-function saveEnvUrl(){
-  const inp=document.getElementById('env-url-input');
-  const url=(inp&&inp.value||'').trim();
-  if(!url){alert('Please paste a Google Apps Script URL first.');return;}
-  if(!url.startsWith('https://script.google.com/')){
-    alert('That doesn\'t look like a Google Apps Script URL.\nIt should start with https://script.google.com/');
-    return;
-  }
-  localStorage.setItem('wp_gs_url_'+APP_ENV, url);
-  localStorage.setItem('wp_gs_url', url); // keep legacy key in sync with current env
-  GS_URL=url;
-  updateEnvBadge();
-  loadFromGS();
+  const url=prompt('Paste your Google Apps Script Web App URL:',GS_URL||'');
+  if(url&&url.trim()){localStorage.setItem('wp_gs_url',url.trim());GS_URL=url.trim();loadFromGS();}
 }
 
 // ══════════════════════════════════════
@@ -1074,7 +1000,7 @@ function goTo(p){
   const g=document.getElementById('pg-'+p);if(g)g.classList.add('on');
   const b=document.querySelector(`.bn[data-p="${p}"]`);if(b)b.classList.add('on');
   document.getElementById('pg-title').textContent=titles[p]||p;
-  ({dashboard:renderDash,products:renderProds,stock:()=>{fillDs();renderStk();},install:()=>{},backup:()=>{renderBackupPage();},adjustments:()=>{fillAdjDropdowns();renderAdjList();showAdjStock();const el=document.getElementById('adj-no');if(el&&!el.value)el.value=autoNo('ADJ',DB.adjustments);},inbound:()=>{fillDs();renderIbList();const el=document.getElementById('ib-no');if(el&&!el.value)el.value=autoNo('IN',DB.inbound);},outbound:()=>{fillDs();renderObList();const el=document.getElementById('ob-no');if(el&&!el.value)el.value=autoNo('OUT',DB.outbound);},transfer:()=>{fillDs();renderTrList();const el=document.getElementById('tr-no');if(el&&!el.value)el.value=autoNo('TRF',DB.transfers);},invoice:()=>{fillDs();if(!ivInited){ivInited=true;const set=(k,v)=>{const el=document.getElementById(k);if(el)el.value=v;};set('iv-no',nextNo());set('iv-date',td());set('iv-due',addD(td(),30));set('iv-type','TAX INVOICE');set('iv-gst','0.10');set('iv-status','pending');}renderIvF();},invoices:renderInvHist,categories:renderCats,branches:renderBranches,departments:()=>{renderDepts();},company:loadCo,more:()=>{updateEnvBadge();}})[p]?.();
+  ({dashboard:renderDash,products:renderProds,stock:()=>{fillDs();renderStk();},install:()=>{},backup:()=>{renderBackupPage();},adjustments:()=>{fillAdjDropdowns();renderAdjList();showAdjStock();const el=document.getElementById('adj-no');if(el&&!el.value)el.value=autoNo('ADJ',DB.adjustments);},inbound:()=>{fillDs();renderIbList();const el=document.getElementById('ib-no');if(el&&!el.value)el.value=autoNo('IN',DB.inbound);},outbound:()=>{fillDs();renderObList();const el=document.getElementById('ob-no');if(el&&!el.value)el.value=autoNo('OUT',DB.outbound);},transfer:()=>{fillDs();renderTrList();const el=document.getElementById('tr-no');if(el&&!el.value)el.value=autoNo('TRF',DB.transfers);},invoice:()=>{fillDs();if(!ivInited){ivInited=true;const set=(k,v)=>{const el=document.getElementById(k);if(el)el.value=v;};set('iv-no',nextNo());set('iv-date',td());set('iv-due',addD(td(),30));set('iv-type','TAX INVOICE');set('iv-gst','0.10');set('iv-status','pending');}renderIvF();},invoices:renderInvHist,categories:renderCats,branches:renderBranches,departments:()=>{renderDepts();},company:loadCo})[p]?.();
 }
 
 // ══════════════════════════════════════
@@ -1231,7 +1157,7 @@ function backupToExcel(){
   add(DB.inbound,'Inbound');
   add(DB.outbound,'Outbound');
   add(DB.transfers,'Transfers');
-  add(DB.invoices.map(r=>Object.assign({},r,{items:'',itemsJson:r.itemsJson||JSON.stringify(r.items||[])})),'Invoices');
+  add(DB.invoices.map(r=>Object.assign({},r,{items:'',itemsJson:r.itemsJson||JSON.stringify((r.items||[]).map(it=>({prodId:it.prodId||'',sku:it.sku||'',desc:it.desc||'',qty:it.qty||0,price:it.price||0})))})),'Invoices');
   add(DB.adjustments,'Adjustments');
   add([{key:'categories',value:DB.categories.join('|')},{key:'branches',value:DB.branches.join('|')},{key:'departments',value:DB.departments.join('|')}],'Settings');
   add(Object.keys(DB.company).filter(k=>k!=='logo').map(k=>({key:k,value:DB.company[k]})),'Company');
@@ -1250,7 +1176,7 @@ async function backupToGSheet(){
   try{
     const backupData={
       products:DB.products,inbound:DB.inbound,outbound:DB.outbound,
-      transfers:DB.transfers,invoices:DB.invoices.map(r=>Object.assign({},r,{itemsJson:r.itemsJson||JSON.stringify(r.items||[])})),
+      transfers:DB.transfers,invoices:DB.invoices.map(r=>Object.assign({},r,{itemsJson:r.itemsJson||JSON.stringify((r.items||[]).map(it=>({prodId:it.prodId||'',sku:it.sku||'',desc:it.desc||'',qty:it.qty||0,price:it.price||0})))})),
       adjustments:DB.adjustments,
       settings:{categories:DB.categories.join('|'),branches:DB.branches.join('|'),departments:(DB.departments||[]).join('|')},
       company:(()=>{const c=Object.assign({},DB.company);delete c.logo;return c;})()
@@ -1676,13 +1602,13 @@ function autoNo(prefix, arr, field='no'){const nums=arr.map(r=>parseInt((r[field
 function addIvItem(){ivItems.push({desc:'',spec:'',qty:1,price:0});renderIvF();}
 function delIvItem(i){ivItems.splice(i,1);renderIvF();}
 function updIv(i,f,v){ivItems[i][f]=(f==='qty'||f==='price')?parseFloat(v)||0:v;updTotals();}
-function pickProd(){const id=document.getElementById('iv-pick').value;if(!id)return;const p=DB.products.find(x=>x.id===id);if(!p)return;ivItems.push({desc:p.name,spec:p.unit,qty:1,price:p.price});document.getElementById('iv-pick').value='';renderIvF();}
+function pickProd(){const id=document.getElementById('iv-pick').value;if(!id)return;const p=DB.products.find(x=>x.id===id);if(!p)return;ivItems.push({prodId:p.id,sku:p.sku,desc:p.name,qty:1,price:p.price});document.getElementById('iv-pick').value='';renderIvF();}
 function renderIvF(){
   if(ivItems.length===0){
     document.getElementById('iv-items').innerHTML='<div style="padding:16px;text-align:center;color:var(--ink3);font-size:13px;font-weight:600">No items yet — use Quick Add or tap "+ Add Line Item"</div>';
     updTotals();return;
   }
-  document.getElementById('iv-items').innerHTML=ivItems.map((it,i)=>`<div class="iitem"><div class="iitem-r1"><input class="ii ii-desc" type="text" value="${it.desc}" placeholder="Description" oninput="updIv(${i},'desc',this.value)"><input class="ii ii-unit" type="text" value="${it.spec}" placeholder="Unit" oninput="updIv(${i},'spec',this.value)"><button class="ii-del" onclick="delIvItem(${i})">×</button></div><div class="iitem-r2"><input class="ii ii-qty" type="number" value="${it.qty}" min="0" oninput="updIv(${i},'qty',this.value)"><input class="ii ii-price" type="number" value="${it.price}" min="0" step="0.01" oninput="updIv(${i},'price',this.value)"><div class="ii-amt">${fM(it.qty*it.price)}</div></div></div>`).join('');updTotals();}
+  document.getElementById('iv-items').innerHTML=ivItems.map((it,i)=>`<div class="iitem"><div class="iitem-r1"><input class="ii ii-desc" type="text" value="${it.desc}" placeholder="Description" oninput="updIv(${i},'desc',this.value)"><input class="ii ii-sku" type="text" value="${it.sku||''}" placeholder="SKU" oninput="updIv(${i},'sku',this.value)" style="width:80px"><button class="ii-del" onclick="delIvItem(${i})">×</button></div><div class="iitem-r2"><input class="ii ii-qty" type="number" value="${it.qty}" min="0" oninput="updIv(${i},'qty',this.value)"><input class="ii ii-price" type="number" value="${it.price}" min="0" step="0.01" oninput="updIv(${i},'price',this.value)"><div class="ii-amt">${fM(it.qty*it.price)}</div></div></div>`).join('');updTotals();}
 function updTotals(){
   const gst=parseFloat(document.getElementById('iv-gst')?.value||'0.10');
   const sub=ivItems.reduce((t,it)=>t+it.qty*it.price,0);
@@ -1692,8 +1618,8 @@ function updTotals(){
   if(discType==='pct'&&discVal>0)discAmt=sub*(discVal/100);
   else if(discType==='fixed'&&discVal>0)discAmt=Math.min(discVal,sub);
   const afterDisc=sub-discAmt;
-  const gstAmt=afterDisc*gst;
-  const tot=afterDisc+gstAmt;
+  const gstAmt=afterDisc*gst/(1+gst);
+  const tot=afterDisc;
   document.getElementById('iv-sub').textContent=fM(sub);
   const discRow=document.getElementById('iv-disc-row');
   if(discRow){
@@ -1703,18 +1629,19 @@ function updTotals(){
       document.getElementById('iv-disc-amt').textContent='-'+fM(discAmt);
     }else{discRow.style.display='none';}
   }
-  document.getElementById('iv-gstlbl').textContent='GST ('+(gst*100).toFixed(0)+'%)';
+  const afterDiscEl=document.getElementById('iv-after-disc');if(afterDiscEl)afterDiscEl.textContent=fM(afterDisc);
+  document.getElementById('iv-gstlbl').textContent='GST ('+(gst*100).toFixed(0)+'% Incl.)';
   document.getElementById('iv-gstamt').textContent=fM(gstAmt);
   document.getElementById('iv-total').textContent=fM(tot);
 }
 function numW(n){const o=['','One','Two','Three','Four','Five','Six','Seven','Eight','Nine','Ten','Eleven','Twelve','Thirteen','Fourteen','Fifteen','Sixteen','Seventeen','Eighteen','Nineteen'],t=['','','Twenty','Thirty','Forty','Fifty','Sixty','Seventy','Eighty','Ninety'];if(n===0)return'Zero Australian Dollars';function b100(x){if(x<20)return o[x];return t[Math.floor(x/10)]+(x%10?'-'+o[x%10]:'');}function b1k(x){if(x<100)return b100(x);return o[Math.floor(x/100)]+' Hundred'+(x%100?' '+b100(x%100):'');}const int=Math.floor(n),dec=Math.round((n-int)*100);let r='';if(int>=1000000)r+=b1k(Math.floor(int/1000000))+' Million ';if(int>=1000)r+=b1k(Math.floor((int%1000000)/1000))+' Thousand ';r+=b1k(int%1000);r=r.trim()+' Australian Dollars';if(dec>0)r+=' and '+dec+'/100';return r+' Only';}
 function renderInv(){
   updTotals();const gst=parseFloat(document.getElementById('iv-gst')?.value||'0.10');const sub=ivItems.reduce((t,it)=>t+it.qty*it.price,0);
-  const discType2=document.getElementById('iv-disc-type')?.value||'none',discVal2=parseFloat(document.getElementById('iv-disc-val')?.value||'0')||0;let discAmt=0;if(discType2==='pct'&&discVal2>0)discAmt=sub*(discVal2/100);else if(discType2==='fixed'&&discVal2>0)discAmt=Math.min(discVal2,sub);const discType=discType2,discVal=discVal2,afterDisc=sub-discAmt,gstAmt=afterDisc*gst,tot=afterDisc+gstAmt;
+  const discType2=document.getElementById('iv-disc-type')?.value||'none',discVal2=parseFloat(document.getElementById('iv-disc-val')?.value||'0')||0;let discAmt=0;if(discType2==='pct'&&discVal2>0)discAmt=sub*(discVal2/100);else if(discType2==='fixed'&&discVal2>0)discAmt=Math.min(discVal2,sub);const discType=discType2,discVal=discVal2,afterDisc=sub-discAmt,gstAmt=afterDisc*gst/(1+gst),tot=afterDisc;
 const co=DB.company,no=document.getElementById('iv-no')?.value||'INV-0001',date=document.getElementById('iv-date')?.value||'',due=document.getElementById('iv-due')?.value||'',type=document.getElementById('iv-type')?.value||'TAX INVOICE',status=document.getElementById('iv-status')?.value||'pending',bname=document.getElementById('iv-bname')?.value||'(Customer)',babn=document.getElementById('iv-babn')?.value||'',bcon=document.getElementById('iv-bcon')?.value||'',btel=document.getElementById('iv-btel')?.value||'',baddr=document.getElementById('iv-baddr')?.value||'',terms=document.getElementById('iv-terms')?.value||'',notes=document.getElementById('iv-notes')?.value||'';
   const stM={paid:['st-paid','✓ PAID'],due:['st-due','PAYMENT DUE'],pending:['st-pending','PENDING']};const[sCls,sLbl]=stM[status]||stM.pending;
-  const rows=ivItems.map(it=>`<tr><td>${it.desc||'—'}</td><td>${it.spec||'—'}</td><td style="text-align:right">${it.qty}</td><td style="text-align:right">${fM(it.price)}</td><td>${fM(it.qty*it.price)}</td></tr>`).join('');
-  document.getElementById('invprev').innerHTML=`<div class="idoc-stripe"></div><div class="idoc-head">${co.logo?`<img src="${co.logo}" class="idoc-logo" alt="logo">`:''}<div class="idoc-toprow"><div><div class="idoc-co">${co.name||'Your Company'}</div><div class="idoc-det">${co.abn?'ABN: '+co.abn+'<br>':''}${co.phone?co.phone+'<br>':''}${co.email?co.email+'<br>':''}${co.addr||''}</div></div><div><div class="idoc-type">${type}</div><div class="idoc-meta">No: <strong>${no}</strong><br>Date: <strong>${fD(date)}</strong><br>Due: <strong>${fD(due)}</strong></div><span class="idoc-st ${sCls}">${sLbl}</span></div></div></div><div class="idoc-parties"><div class="idoc-party seller"><div class="idoc-ptag">From — Seller</div><div class="idoc-pname">${co.name||'Your Company'}</div><div class="idoc-pdet">${co.abn?'ABN: '+co.abn+'<br>':''}${co.bank?'Bank: '+co.bank+'<br>':''}${(co.bsb||co.acc)?'BSB: '+co.bsb+' | Acc: '+co.acc+'<br>':''}${co.accname?'Name: '+co.accname:''}</div></div><div class="idoc-party buyer"><div class="idoc-ptag">To — Buyer</div><div class="idoc-pname">${bname}</div><div class="idoc-pdet">${babn?'ABN: '+babn+'<br>':''}${bcon?'Attn: '+bcon+'<br>':''}${btel?'Tel: '+btel+'<br>':''}${baddr||''}</div></div></div><div style="padding:0 18px 8px"><table class="idoc-tbl"><thead><tr><th style="width:34%">Description</th><th style="width:10%">Unit</th><th style="width:8%;text-align:right">Qty</th><th style="width:16%;text-align:right">Price</th><th style="width:18%;text-align:right">Amount</th></tr></thead><tbody>${rows}</tbody><tfoot><tr><td colspan="4" style="text-align:right">Subtotal (excl. GST)</td><td style="text-align:right;font-family:monospace">${fM(sub)}</td></tr>${discAmt>0?`<tr><td colspan="4" style="text-align:right;color:#dc2626">${discType==='pct'?'Discount ('+discVal+'%)':'Discount'}</td><td style="text-align:right;font-family:monospace;color:#dc2626">-${fM(discAmt)}</td></tr>`:''}<tr><td colspan="4" style="text-align:right">GST (${(gst*100).toFixed(0)}%)</td><td style="text-align:right;font-family:monospace">${fM(gstAmt)}</td></tr><tr class="idoc-grand"><td colspan="4">Total Amount Due</td><td>${fM(tot)}</td></tr></tfoot></table></div><div class="idoc-words">Amount in words: <em>${numW(tot)}</em></div><div class="idoc-notes"><div class="idoc-ntag">Payment Terms</div>${terms}${notes?' — '+notes:''}${co.bank?'<br>Pay to: <strong>'+co.bank+'</strong> | BSB: <strong>'+(co.bsb||'')+'</strong> | Acc: <strong>'+(co.acc||'')+'</strong>':''}</div>${co.tac?`<div style="padding:10px 18px 6px;border-top:1px solid #e2e8f0"><div class="idoc-ntag">Terms &amp; Conditions</div><div style="font-size:10px;color:#475569;line-height:1.6;white-space:pre-wrap">${co.tac}</div></div>`:''}<div class="idoc-sigs"><div class="idoc-sig"><div class="idoc-slbl">Issued By</div><div class="idoc-sline"></div><div class="idoc-sname">Signature</div></div><div class="idoc-sig"><div class="idoc-slbl">Authorised By</div><div class="idoc-sline"></div><div class="idoc-sname">Signature</div></div><div class="idoc-sig"><div class="idoc-slbl">Received By</div><div class="idoc-sline"></div><div class="idoc-sname">Signature</div></div></div><div class="idoc-foot"><span class="idoc-fco">${co.name||'Your Company'}</span><span>${no} · ${type}</span></div>`;
+  const rows=ivItems.map(it=>{const prod=it.prodId?DB.products.find(p=>p.id===it.prodId):null;const sku=prod?prod.sku:(it.sku||'');return`<tr><td style='font-family:monospace;font-size:11px'>${sku}</td><td>${it.desc||'—'}</td><td style="text-align:right">${it.qty}</td><td style="text-align:right">${fM(it.price)}</td><td style="text-align:right">${fM(it.qty*it.price)}</td></tr>`;}).join('');
+  document.getElementById('invprev').innerHTML=`<div class="idoc-stripe"></div><div class="idoc-head">${co.logo?`<img src="${co.logo}" class="idoc-logo" alt="logo">`:''}<div class="idoc-toprow"><div><div class="idoc-co">${co.name||'Your Company'}</div><div class="idoc-det">${co.abn?'ABN: '+co.abn+'<br>':''}${co.phone?co.phone+'<br>':''}${co.email?co.email+'<br>':''}${co.addr||''}</div></div><div><div class="idoc-type">${type}</div><div class="idoc-meta">No: <strong>${no}</strong><br>Date: <strong>${fD(date)}</strong><br>Due: <strong>${fD(due)}</strong></div><span class="idoc-st ${sCls}">${sLbl}</span></div></div></div><div class="idoc-parties"><div class="idoc-party buyer"><div class="idoc-ptag">To — Buyer</div><div class="idoc-pname">${bname}</div><div class="idoc-pdet">${babn?'ABN: '+babn+'<br>':''}${bcon?'Attn: '+bcon+'<br>':''}${btel?'Tel: '+btel+'<br>':''}${baddr||''}</div></div></div><div style="padding:0 18px 8px"><table class="idoc-tbl"><thead><tr><th style="width:14%">SKU</th><th>Description</th><th style="width:8%;text-align:right">Qty</th><th style="width:16%;text-align:right">Unit Price</th><th style="width:18%;text-align:right">Amount</th></tr></thead><tbody>${rows}</tbody><tfoot><tr><td colspan="4" style="text-align:right">Subtotal</td><td style="text-align:right;font-family:monospace">${fM(sub)}</td></tr>${discAmt>0?`<tr><td colspan="4" style="text-align:right;color:#dc2626">${discType==='pct'?'Discount ('+discVal+'%)':'Discount'}</td><td style="text-align:right;font-family:monospace;color:#dc2626">-${fM(discAmt)}</td></tr>`:''}<tr><td colspan="4" style="text-align:right">Total Amount</td><td style="text-align:right;font-family:monospace">${fM(afterDisc)}</td></tr><tr><td colspan="4" style="text-align:right;color:#64748b;font-style:italic">GST (${(gst*100).toFixed(0)}% Incl.)</td><td style="text-align:right;font-family:monospace">${fM(gstAmt)}</td></tr><tr class="idoc-grand"><td colspan="4">Total Amount Due</td><td>${fM(tot)}</td></tr></tfoot></table></div><div class="idoc-words">Amount in words: <em>${numW(tot)}</em></div><div class="idoc-notes"><div class="idoc-ntag">Payment Terms</div>${terms}${notes?' — '+notes:''}${co.bank?'<br>Pay to: <strong>'+co.bank+'</strong> | BSB: <strong>'+(co.bsb||'')+'</strong> | Acc: <strong>'+(co.acc||'')+'</strong>':''}</div><div class="idoc-sigs"><div class="idoc-sig"><div class="idoc-slbl">Issued By</div><div class="idoc-sline"></div><div class="idoc-sname">Signature</div></div><div class="idoc-sig"><div class="idoc-slbl">Authorised By</div><div class="idoc-sline"></div><div class="idoc-sname">Signature</div></div><div class="idoc-sig"><div class="idoc-slbl">Received By</div><div class="idoc-sline"></div><div class="idoc-sname">Signature</div></div></div><div class="idoc-foot"><span class="idoc-fco">${co.name||'Your Company'}</span><span>${no} · ${type}</span></div>`;
 }
 
 
@@ -1749,7 +1676,7 @@ function saveInvRec(){
     terms:document.getElementById('iv-terms').value,
     notes:document.getElementById('iv-notes').value,
     gstRate:gst,
-    items:[...ivItems],itemsJson:JSON.stringify(ivItems.map(it=>({desc:it.desc||'',spec:it.spec||'',qty:it.qty||0,price:it.price||0})))
+    items:[...ivItems],itemsJson:JSON.stringify(ivItems.map(it=>({prodId:it.prodId||'',sku:it.sku||'',desc:it.desc||'',qty:it.qty||0,price:it.price||0})))
   });scheduleSave();alert('Invoice saved and syncing to Google Sheets!');}
 function printInv(){renderInv();const c=document.getElementById('invprev').outerHTML;const w=window.open('','_blank');w.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Invoice</title><style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:system-ui,sans-serif;background:#fff}.idoc-stripe{height:4px;background:linear-gradient(90deg,#1e3a8a,#3b82f6,#93c5fd)}.idoc-head{padding:16px 18px 12px;border-bottom:1px solid #e2e8f0}.idoc-logo{max-height:70px;max-width:180px;object-fit:contain;margin-bottom:8px;display:block}.idoc-toprow{display:flex;justify-content:space-between;align-items:flex-start}.idoc-co{font-size:14px;font-weight:900;color:#0f172a}.idoc-det{font-size:9.5px;color:#64748b;line-height:1.8;margin-top:3px}.idoc-type{font-size:14px;font-weight:900;color:#1e3a8a;text-align:right}.idoc-meta{font-size:9px;color:#64748b;text-align:right;margin-top:4px;line-height:1.8}.idoc-meta strong{color:#0f172a;font-family:monospace}.idoc-st{display:inline-block;padding:2px 8px;border-radius:20px;font-size:8.5px;font-weight:800}.st-paid{background:#dcfce7;color:#16a34a}.st-due{background:#fef3c7;color:#d97706}.st-pending{background:#e0e7ff;color:#4338ca}.idoc-parties{display:grid;grid-template-columns:1fr 1fr;border-bottom:1px solid #e2e8f0}.idoc-party{padding:10px 18px}.idoc-party.buyer{border-left:1px solid #e2e8f0}.idoc-ptag{font-size:7.5px;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:#94a3b8;margin-bottom:3px}.idoc-pname{font-size:11px;font-weight:800;color:#0f172a;margin-bottom:2px}.idoc-pdet{font-size:9px;color:#64748b;line-height:1.7}.idoc-tbl{width:100%;border-collapse:collapse;font-size:9.5px}.idoc-tbl thead tr{border-bottom:2px solid #0f172a}.idoc-tbl th{padding:6px 8px;text-align:left;font-size:7.5px;font-weight:800;color:#94a3b8;text-transform:uppercase}.idoc-tbl th:nth-child(n+3){text-align:right}.idoc-tbl td{padding:7px 8px;border-bottom:1px solid #f1f5f9;color:#334155}.idoc-tbl td:nth-child(n+3){text-align:right;font-family:monospace;font-size:9px}.idoc-tbl tbody tr:last-child td{border-bottom:none}.idoc-tbl tfoot td{border-top:1px solid #e2e8f0;padding:5px 8px;color:#64748b;font-size:9px}.idoc-grand td{background:#0f172a;color:#fff;font-weight:800;font-size:10px;padding:8px}.idoc-grand td:last-child{font-family:monospace;font-size:12px;color:#93c5fd;text-align:right}.idoc-words{padding:7px 18px;font-size:8.5px;color:#64748b;font-style:italic;border-bottom:1px solid #e2e8f0}.idoc-notes{background:#f8fafc;padding:8px 18px;font-size:9px;color:#64748b;line-height:1.7}.idoc-ntag{font-size:7.5px;font-weight:800;text-transform:uppercase;color:#94a3b8;margin-bottom:2px}.idoc-sigs{display:flex;padding:10px 18px 12px}.idoc-sig{flex:1;border-right:1px solid #e2e8f0;padding-right:10px;margin-right:10px}.idoc-sig:last-child{border-right:none;padding-right:0;margin-right:0}.idoc-slbl{font-size:7.5px;font-weight:800;text-transform:uppercase;color:#94a3b8;margin-bottom:18px}.idoc-sline{border-bottom:1px solid #cbd5e0;margin-bottom:3px}.idoc-sname{font-size:8.5px;color:#94a3b8}.idoc-foot{background:#0f172a;padding:7px 18px;display:flex;justify-content:space-between;font-size:8.5px;color:#475569}.idoc-fco{color:#94a3b8;font-weight:700}@page{margin:6mm;size:A4}</style></head><body>'+c+'<script>window.onload=()=>window.print()<\/script></body></html>');w.document.close();}
 function renderInvHist(){
@@ -1777,13 +1704,13 @@ function renderInvHist(){
     </div>`).join('')||'<div style="padding:14px 0;text-align:center;color:var(--ink3);font-size:13px;font-weight:600">No invoices yet</div>');
 }
 function delInv(id){if(!confirm('Delete this invoice?'))return;DB.invoices=DB.invoices.filter(i=>i.id!==id);renderInvHist();scheduleSave();}
-function loadInv(id){const inv=DB.invoices.find(i=>i.id===id);if(!inv)return;ivItems=inv.items?.length?[...inv.items]:[];const set=(k,v)=>{const el=document.getElementById(k);if(el)el.value=v;};set('iv-no',inv.no);set('iv-date',inv.date||'');set('iv-due',inv.due||'');set('iv-type',inv.type||'TAX INVOICE');set('iv-status',inv.status||'pending');set('iv-bname',inv.buyer||'');set('iv-babn',inv.babn||'');set('iv-baddr',inv.baddr||'');set('iv-notes',inv.notes||'');fillDs();renderIvF();showInvTab('form');goTo('invoice');}
+function loadInv(id){const inv=DB.invoices.find(i=>i.id===id);if(!inv)return;ivItems=inv.items?.length?[...inv.items]:[];const set=(k,v)=>{const el=document.getElementById(k);if(el)el.value=v;};set('iv-no',inv.no);set('iv-date',(inv.date||'').split('T')[0].split(' ')[0]);set('iv-due',inv.due||'');set('iv-type',inv.type||'TAX INVOICE');set('iv-status',inv.status||'pending');set('iv-bname',inv.buyer||'');set('iv-babn',inv.babn||'');set('iv-baddr',inv.baddr||'');set('iv-branch',inv.branch||'');set('iv-notes',inv.notes||'');set('iv-disc-type',inv.discType||'none');set('iv-disc-val',inv.discVal||'');set('iv-gst',inv.gstRate||'0.10');fillDs();renderIvF();showInvTab('form');goTo('invoice');}
 
 // ══════════════════════════════════════
 // COMPANY & LOGO
 // ══════════════════════════════════════
-function loadCo(){const co=DB.company;['name','abn','phone','addr','email','bank','accname','bsb','acc','web','prefix'].forEach(k=>{const el=document.getElementById('co-'+k);if(el)el.value=co[k]||'';});const tac=document.getElementById('co-tac');if(tac)tac.value=co.tac||'';showLogoPrev(co.logo||null);}
-function saveCo(){const co={};['name','abn','phone','addr','email','bank','accname','bsb','acc','web','prefix'].forEach(k=>{const el=document.getElementById('co-'+k);if(el)co[k]=el.value;});const tac=document.getElementById('co-tac');co.tac=tac?tac.value:'';co.logo=DB.company.logo||'';DB.company=co;scheduleSave();alert('Company settings saved and syncing!');}
+function loadCo(){const co=DB.company;['name','abn','phone','addr','email','bank','accname','bsb','acc','web','prefix'].forEach(k=>{const el=document.getElementById('co-'+k);if(!el)return;if(k==='bsb'){const raw=(co[k]||'').toString().replace(/\D/g,'');const padded=raw.padStart(6,'0');el.value=raw.length?padded.slice(0,3)+'-'+padded.slice(3):'';} else {el.value=co[k]||'';}});const tac=document.getElementById('co-tac');if(tac)tac.value=co.tac||'';showLogoPrev(co.logo||null);}
+function saveCo(){const co={};['name','abn','phone','addr','email','bank','accname','bsb','acc','web','prefix'].forEach(k=>{const el=document.getElementById('co-'+k);if(!el)return;if(k==='bsb'){const raw=el.value.replace(/\D/g,'');const padded=raw.padStart(6,'0');co[k]=raw.length?padded.slice(0,3)+'-'+padded.slice(3):'';}else{co[k]=el.value;}});const tac=document.getElementById('co-tac');co.tac=tac?tac.value:'';co.logo=DB.company.logo||'';DB.company=co;scheduleSave();alert('Company settings saved and syncing!');}
 function uploadLogo(input){const file=input.files[0];if(!file)return;const reader=new FileReader();reader.onload=e=>{DB.company.logo=e.target.result;localStorage.setItem('wp_logo',e.target.result);showLogoPrev(e.target.result);};reader.readAsDataURL(file);}
 function showLogoPrev(src){const el=document.getElementById('logo-prev');const btn=document.getElementById('logo-del');if(!el)return;if(src){el.innerHTML=`<img src="${src}" style="max-height:56px;max-width:150px;object-fit:contain;border-radius:6px" alt="logo">`;if(btn)btn.style.display='flex';}else{el.innerHTML='No logo uploaded';if(btn)btn.style.display='none';}}
 function removeLogo(){if(!confirm('Remove logo?'))return;DB.company.logo='';localStorage.removeItem('wp_logo');showLogoPrev(null);document.getElementById('co-logo-file').value='';}
@@ -1792,28 +1719,22 @@ function removeLogo(){if(!confirm('Remove logo?'))return;DB.company.logo='';loca
 // INIT
 // ══════════════════════════════════════
 document.addEventListener('DOMContentLoaded', () => {
-  // Restore environment (prod/test)
-  APP_ENV = localStorage.getItem('wp_env') || 'prod';
-
-  // Load URL for current env; fall back to legacy wp_gs_url key for existing users
-  GS_URL = localStorage.getItem('wp_gs_url_' + APP_ENV) || localStorage.getItem('wp_gs_url') || '';
-
-  // Migrate legacy key once into the prod slot
-  if (!localStorage.getItem('wp_gs_url_prod') && localStorage.getItem('wp_gs_url')) {
-    localStorage.setItem('wp_gs_url_prod', localStorage.getItem('wp_gs_url'));
-  }
+  // Load URL: use localStorage if available, otherwise use hardcoded default
+  const savedUrl = localStorage.getItem('wp_gs_url') || 'https://script.google.com/macros/s/AKfycbxR-DWHAqc2hVlL0xxiROXZBJ72IaZ7vCr7NgWMi9mwj0iXQi79pDRfQWaEmDR6WKAe/exec';
+  GS_URL = savedUrl;
+  // Always keep localStorage in sync so it persists
+  localStorage.setItem('wp_gs_url', GS_URL);
 
   // Load saved logo
   const logo = localStorage.getItem('wp_logo');
   if (logo) DB.company.logo = logo;
 
-  updateEnvBadge();
   renderDash();
   document.querySelectorAll('input[type=date]').forEach(el => {
     if (!el.value) el.value = td();
   });
 
-  // Connect automatically only if a URL is saved
+  // Connect automatically
   if (GS_URL) {
     setTimeout(() => loadFromGS(), 300);
   } else {
@@ -1822,15 +1743,12 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 </script>
 <script>
-// ── SERVICE WORKER ─────────────────────────────────────────────────────
+// Register Service Worker for PWA
 if('serviceWorker' in navigator){
-  window.addEventListener('load', () => {
+  window.addEventListener('load', ()=>{
     navigator.serviceWorker.register('sw.js')
-      .then(reg => {
-        console.log('SW registered');
-        reg.update(); // check for new version on every load
-      })
-      .catch(err => console.log('SW error:', err));
+      .then(reg=>console.log('SW registered:', reg.scope))
+      .catch(err=>console.log('SW error:', err));
   });
 }
 
@@ -1839,6 +1757,7 @@ let deferredPrompt;
 window.addEventListener('beforeinstallprompt', e=>{
   e.preventDefault();
   deferredPrompt=e;
+  // Show install button if not already installed
   const installBtn=document.getElementById('install-btn');
   if(installBtn)installBtn.style.display='flex';
 });
