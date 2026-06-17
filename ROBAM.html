@@ -237,15 +237,8 @@ body{height:100%;font-family:'Nunito',sans-serif;background:var(--bg);color:var(
 .idoc-tbl tfoot td{border-top:1px solid #e2e8f0;padding:5px 8px;color:#64748b;font-size:9px}
 .idoc-grand td{background:#0f172a;color:#fff;font-weight:800;font-size:10px;padding:8px}
 .idoc-grand td:last-child{font-family:'JetBrains Mono',monospace;font-size:12px;color:#93c5fd;text-align:right}
-.idoc-words{padding:7px 18px;font-size:8.5px;color:#64748b;font-style:italic;border-bottom:1px solid #e2e8f0}
 .idoc-notes{background:#f8fafc;padding:8px 18px;font-size:9px;color:#64748b;line-height:1.7}
 .idoc-ntag{font-size:7.5px;font-weight:800;text-transform:uppercase;letter-spacing:.7px;color:#94a3b8;margin-bottom:2px}
-.idoc-sigs{display:flex;padding:10px 18px 12px}
-.idoc-sig{flex:1;border-right:1px solid #e2e8f0;padding-right:10px;margin-right:10px}
-.idoc-sig:last-child{border-right:none;padding-right:0;margin-right:0}
-.idoc-slbl{font-size:7.5px;font-weight:800;text-transform:uppercase;color:#94a3b8;margin-bottom:18px}
-.idoc-sline{border-bottom:1px solid #cbd5e0;margin-bottom:3px}
-.idoc-sname{font-size:8.5px;color:#94a3b8}
 .idoc-foot{background:#0f172a;padding:7px 18px;display:flex;justify-content:space-between;font-size:8.5px;color:#475569}
 .idoc-fco{color:#94a3b8;font-weight:700}
 /* DRAWER */
@@ -1791,7 +1784,7 @@ function renderInv(){
     :'';
   var logoHtml=co.logo?'<img src="'+co.logo+'" class="idoc-logo" alt="logo">':'';
   var bankLine=co.bank
-    ?('<br>Pay to: <strong>'+co.bank+'</strong> | BSB: <strong>'+(co.bsb||'')+'</strong> | Acc: <strong>'+(co.acc||'')+'</strong>')
+    ?('<br>Pay to: <strong>'+co.bank+'</strong> | BSB: <strong>'+(co.bsb||'')+'</strong> | Acc: <strong>'+(co.acc||'')+'</strong>'+(co.accname?' | Name: <strong>'+co.accname+'</strong>':''))
     :'';
   var tacBlock=co.tac
     ?('<div style="padding:8px 18px;background:#f8fafc;border-top:1px solid #e2e8f0">'
@@ -1849,14 +1842,8 @@ function renderInv(){
         +'<tr class="idoc-grand"><td colspan="4">Total Amount Due</td><td>'+fM(tot)+'</td></tr>'
       +'</tfoot></table>'
     +'</div>'
-    +'<div class="idoc-words">Amount in words: <em>'+numW(tot)+'</em></div>'
     +'<div class="idoc-notes"><div class="idoc-ntag">Payment Terms</div>'+terms+(notes?' &mdash; '+notes:'')+bankLine+'</div>'
     +tacBlock
-    +'<div class="idoc-sigs">'
-      +'<div class="idoc-sig"><div class="idoc-slbl">Issued By</div><div class="idoc-sline"></div><div class="idoc-sname">Signature</div></div>'
-      +'<div class="idoc-sig"><div class="idoc-slbl">Authorised By</div><div class="idoc-sline"></div><div class="idoc-sname">Signature</div></div>'
-      +'<div class="idoc-sig"><div class="idoc-slbl">Received By</div><div class="idoc-sline"></div><div class="idoc-sname">Signature</div></div>'
-    +'</div>'
     +'<div class="idoc-foot"><span class="idoc-fco">'+(co.name||'Your Company')+'</span><span>'+no+' &middot; '+type+'</span></div>';
   document.getElementById('invprev').innerHTML=html;
 }
@@ -1911,7 +1898,7 @@ function saveInvRec(){
   const msg=obCount>0?'Invoice saved!\n✅ '+obCount+' outbound record(s) auto-created for branch: '+invBranch:invBranch?'Invoice saved! (No product lines to record as outbound.)':'Invoice saved!\n⚠️ No branch selected — outbound stock not recorded.';
   alert(msg);
 }
-function printInv(){renderInv();const c=document.getElementById('invprev').outerHTML;const w=window.open('','_blank');w.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Invoice</title><style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:system-ui,sans-serif;background:#fff}.idoc-stripe{height:4px;background:linear-gradient(90deg,#1e3a8a,#3b82f6,#93c5fd)}.idoc-head{padding:16px 18px 12px;border-bottom:1px solid #e2e8f0}.idoc-logo{max-height:70px;max-width:180px;object-fit:contain;margin-bottom:8px;display:block}.idoc-toprow{display:flex;justify-content:space-between;align-items:flex-start}.idoc-co{font-size:14px;font-weight:900;color:#0f172a}.idoc-det{font-size:9.5px;color:#64748b;line-height:1.8;margin-top:3px}.idoc-type{font-size:14px;font-weight:900;color:#1e3a8a;text-align:right}.idoc-meta{font-size:9px;color:#64748b;text-align:right;margin-top:4px;line-height:1.8}.idoc-meta strong{color:#0f172a;font-family:monospace}.idoc-st{display:inline-block;padding:2px 8px;border-radius:20px;font-size:8.5px;font-weight:800}.st-paid{background:#dcfce7;color:#16a34a}.st-due{background:#fef3c7;color:#d97706}.st-pending{background:#e0e7ff;color:#4338ca}.idoc-parties{display:grid;grid-template-columns:1fr 1fr;border-bottom:1px solid #e2e8f0}.idoc-party{padding:10px 18px}.idoc-party.buyer{border-left:1px solid #e2e8f0}.idoc-ptag{font-size:7.5px;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:#94a3b8;margin-bottom:3px}.idoc-pname{font-size:11px;font-weight:800;color:#0f172a;margin-bottom:2px}.idoc-pdet{font-size:9px;color:#64748b;line-height:1.7}.idoc-tbl{width:100%;border-collapse:collapse;font-size:9.5px}.idoc-tbl thead tr{border-bottom:2px solid #0f172a}.idoc-tbl th{padding:6px 8px;text-align:left;font-size:7.5px;font-weight:800;color:#94a3b8;text-transform:uppercase}.idoc-tbl th:nth-child(n+3){text-align:right}.idoc-tbl td{padding:7px 8px;border-bottom:1px solid #f1f5f9;color:#334155}.idoc-tbl td:nth-child(n+3){text-align:right;font-family:monospace;font-size:9px}.idoc-tbl tbody tr:last-child td{border-bottom:none}.idoc-tbl tfoot td{border-top:1px solid #e2e8f0;padding:5px 8px;color:#64748b;font-size:9px}.idoc-grand td{background:#0f172a;color:#fff;font-weight:800;font-size:10px;padding:8px}.idoc-grand td:last-child{font-family:monospace;font-size:12px;color:#93c5fd;text-align:right}.idoc-words{padding:7px 18px;font-size:8.5px;color:#64748b;font-style:italic;border-bottom:1px solid #e2e8f0}.idoc-notes{background:#f8fafc;padding:8px 18px;font-size:9px;color:#64748b;line-height:1.7}.idoc-ntag{font-size:7.5px;font-weight:800;text-transform:uppercase;color:#94a3b8;margin-bottom:2px}.idoc-sigs{display:flex;padding:10px 18px 12px}.idoc-sig{flex:1;border-right:1px solid #e2e8f0;padding-right:10px;margin-right:10px}.idoc-sig:last-child{border-right:none;padding-right:0;margin-right:0}.idoc-slbl{font-size:7.5px;font-weight:800;text-transform:uppercase;color:#94a3b8;margin-bottom:18px}.idoc-sline{border-bottom:1px solid #cbd5e0;margin-bottom:3px}.idoc-sname{font-size:8.5px;color:#94a3b8}.idoc-foot{background:#0f172a;padding:7px 18px;display:flex;justify-content:space-between;font-size:8.5px;color:#475569}.idoc-fco{color:#94a3b8;font-weight:700}@page{margin:6mm;size:A4}</style></head><body>'+c+'<script>window.onload=()=>window.print()<\/script></body></html>');w.document.close();}
+function printInv(){renderInv();const c=document.getElementById('invprev').outerHTML;const w=window.open('','_blank');w.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Invoice</title><style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:system-ui,sans-serif;background:#fff}.idoc-stripe{height:4px;background:linear-gradient(90deg,#1e3a8a,#3b82f6,#93c5fd)}.idoc-head{padding:16px 18px 12px;border-bottom:1px solid #e2e8f0}.idoc-logo{max-height:70px;max-width:180px;object-fit:contain;margin-bottom:8px;display:block}.idoc-toprow{display:flex;justify-content:space-between;align-items:flex-start}.idoc-co{font-size:14px;font-weight:900;color:#0f172a}.idoc-det{font-size:9.5px;color:#64748b;line-height:1.8;margin-top:3px}.idoc-type{font-size:14px;font-weight:900;color:#1e3a8a;text-align:right}.idoc-meta{font-size:9px;color:#64748b;text-align:right;margin-top:4px;line-height:1.8}.idoc-meta strong{color:#0f172a;font-family:monospace}.idoc-st{display:inline-block;padding:2px 8px;border-radius:20px;font-size:8.5px;font-weight:800}.st-paid{background:#dcfce7;color:#16a34a}.st-due{background:#fef3c7;color:#d97706}.st-pending{background:#e0e7ff;color:#4338ca}.idoc-parties{display:grid;grid-template-columns:1fr 1fr;border-bottom:1px solid #e2e8f0}.idoc-party{padding:10px 18px}.idoc-party.buyer{border-left:1px solid #e2e8f0}.idoc-ptag{font-size:7.5px;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:#94a3b8;margin-bottom:3px}.idoc-pname{font-size:11px;font-weight:800;color:#0f172a;margin-bottom:2px}.idoc-pdet{font-size:9px;color:#64748b;line-height:1.7}.idoc-tbl{width:100%;border-collapse:collapse;font-size:9.5px}.idoc-tbl thead tr{border-bottom:2px solid #0f172a}.idoc-tbl th{padding:6px 8px;text-align:left;font-size:7.5px;font-weight:800;color:#94a3b8;text-transform:uppercase}.idoc-tbl th:nth-child(n+3){text-align:right}.idoc-tbl td{padding:7px 8px;border-bottom:1px solid #f1f5f9;color:#334155}.idoc-tbl td:nth-child(n+3){text-align:right;font-family:monospace;font-size:9px}.idoc-tbl tbody tr:last-child td{border-bottom:none}.idoc-tbl tfoot td{border-top:1px solid #e2e8f0;padding:5px 8px;color:#64748b;font-size:9px}.idoc-grand td{background:#0f172a;color:#fff;font-weight:800;font-size:10px;padding:8px}.idoc-grand td:last-child{font-family:monospace;font-size:12px;color:#93c5fd;text-align:right}.idoc-notes{background:#f8fafc;padding:8px 18px;font-size:9px;color:#64748b;line-height:1.7}.idoc-ntag{font-size:7.5px;font-weight:800;text-transform:uppercase;color:#94a3b8;margin-bottom:2px}.idoc-foot{background:#0f172a;padding:7px 18px;display:flex;justify-content:space-between;font-size:8.5px;color:#475569}.idoc-fco{color:#94a3b8;font-weight:700}@page{margin:6mm;size:A4}</style></head><body>'+c+'<script>window.onload=()=>window.print()<\/script></body></html>');w.document.close();}
 function renderInvHist(){
   const filtered=filterByYear(DB.invoices).slice().reverse();
   const yearNote=DB.invoices.length>0&&filtered.length===0
