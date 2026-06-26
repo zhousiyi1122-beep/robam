@@ -211,16 +211,16 @@ body{height:100%;font-family:'Nunito',sans-serif;background:var(--bg);color:var(
 /* INVOICE DOC */
 .idoc{background:#fff;border-radius:var(--r);overflow:hidden;font-size:11px;color:#0f172a;line-height:1.6;box-shadow:0 2px 12px rgba(0,0,0,.1)}
 .idoc-stripe{height:4px;background:linear-gradient(90deg,#1e3a8a,#3b82f6,#93c5fd,#3b82f6,#1e3a8a)}
-.idoc-head{padding:16px 18px 12px;border-bottom:1px solid #e2e8f0}
-.idoc-logo{height:100%;width:auto;max-width:100%;object-fit:contain;object-position:left top;display:block}
-.idoc-logo-cell{display:flex;align-items:stretch;justify-content:flex-start;overflow:hidden}
+.idoc-head{padding:9px 18px 12px;border-bottom:1px solid #e2e8f0}
+.idoc-logo{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;object-position:left top;display:block}
+.idoc-logo-cell{position:relative;overflow:hidden}
 .idoc-toprow{display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:stretch}
 .idoc-co{font-size:14px;font-weight:900;color:#0f172a}
 .idoc-det{font-size:9.5px;color:#64748b;line-height:1.8;margin-top:3px}
-.idoc-type{font-size:14px;font-weight:900;color:#1e3a8a;text-align:right}
-.idoc-meta{font-size:9px;color:#64748b;text-align:right;margin-top:4px;line-height:1.8}
+.idoc-type{font-size:12px;font-weight:900;color:#1e3a8a;text-align:right}
+.idoc-meta{font-size:9px;color:#64748b;text-align:right;margin-top:3px;line-height:1.45}
 .idoc-meta strong{color:#0f172a;font-family:'JetBrains Mono',monospace}
-.idoc-st{display:inline-block;padding:2px 8px;border-radius:20px;font-size:8.5px;font-weight:800}
+.idoc-st{display:inline-block;margin-top:3px;padding:2px 8px;border-radius:20px;font-size:8.5px;font-weight:800}
 .st-paid{background:#dcfce7;color:#16a34a}.st-due{background:#fef3c7;color:#d97706}.st-pending{background:#e0e7ff;color:#4338ca}
 .idoc-parties{display:grid;grid-template-columns:1fr 1fr;border-bottom:1px solid #e2e8f0}
 .idoc-party{padding:10px 18px}
@@ -497,6 +497,7 @@ body{height:100%;font-family:'Nunito',sans-serif;background:var(--bg);color:var(
           <div class="lrow" onclick="goTo('categories')"><div class="lr-ic lr-p">🏷️</div><div class="lr-main"><div class="lr-name">Categories</div><div class="lr-sub">Manage product categories</div></div><span style="color:var(--ink3);font-size:20px">›</span></div>
           <div class="lrow" onclick="goTo('branches')"><div class="lr-ic lr-t">🏢</div><div class="lr-main"><div class="lr-name">Branches</div><div class="lr-sub">Manage branches & locations</div></div><span style="color:var(--ink3);font-size:20px">›</span></div>
           <div class="lrow" onclick="goTo('departments')"><div class="lr-ic lr-a">🏬</div><div class="lr-main"><div class="lr-name">Departments</div><div class="lr-sub">Manage outbound departments</div></div><span style="color:var(--ink3);font-size:20px">›</span></div>
+          <div class="lrow" onclick="openLockSettings()"><div class="lr-ic lr-r">🔒</div><div class="lr-main"><div class="lr-name">App Lock</div><div class="lr-sub" id="lock-status-sub">Protect Invoice & More with a PIN</div></div><span style="color:var(--ink3);font-size:20px">›</span></div>
           <div class="lrow" onclick="goTo('company')"><div class="lr-ic lr-b">⚙️</div><div class="lr-main"><div class="lr-name">Company Settings</div><div class="lr-sub">Name, ABN, bank, logo</div></div><span style="color:var(--ink3);font-size:20px">›</span></div>
         </div>
       </div>
@@ -746,6 +747,32 @@ body{height:100%;font-family:'Nunito',sans-serif;background:var(--bg);color:var(
 </div>
 
 <!-- PRODUCT DRAWER -->
+<!-- APP LOCK SETUP DRAWER -->
+<div class="drw-ov" id="lock-ov" onclick="closeLockSettings()"></div>
+<div class="drw" id="lock-drw">
+  <div class="drw-handle"></div>
+  <div class="drw-head"><div class="drw-title">🔒 App Lock</div><button class="drw-close" onclick="closeLockSettings()">✕</button></div>
+  <div class="drw-body">
+    <p style="font-size:12.5px;color:var(--ink2);line-height:1.6;margin-bottom:14px">Set a simple PIN to stop casual unauthorised access to <strong>Invoice</strong>, <strong>Invoice History</strong>, and <strong>More</strong>. This is a basic deterrent, not strong security — anyone with technical access to the app's source could bypass it.</p>
+    <div class="fg"><label class="fl">PIN (numbers or letters)</label><input class="fi mono" id="lock-pin-input" placeholder="e.g. 1234" autocomplete="off"></div>
+    <button class="btn btn-p" style="margin-bottom:8px" onclick="saveLockPin()">Save PIN</button>
+    <button class="btn btn-o" onclick="removeLockPin()">Remove PIN (disable lock)</button>
+  </div>
+</div>
+
+<!-- PIN ENTRY GATE -->
+<div class="drw-ov" id="pin-ov"></div>
+<div class="drw" id="pin-drw">
+  <div class="drw-handle"></div>
+  <div class="drw-head"><div class="drw-title">🔒 Enter PIN</div><button class="drw-close" onclick="closePinGate()">✕</button></div>
+  <div class="drw-body">
+    <p style="font-size:12.5px;color:var(--ink2);margin-bottom:12px">This section is protected. Enter the PIN to continue.</p>
+    <input class="fi mono" id="pin-gate-input" placeholder="PIN" autocomplete="off" style="text-align:center;font-size:18px;letter-spacing:4px" onkeydown="if(event.key==='Enter')submitPin()">
+    <div id="pin-error" style="display:none;color:var(--red);font-size:12px;font-weight:700;margin-top:8px;text-align:center">❌ Incorrect PIN, try again</div>
+    <button class="btn btn-p" style="margin-top:14px" onclick="submitPin()">Unlock</button>
+  </div>
+</div>
+
 <div class="drw-ov" id="pd-ov" onclick="closePD()"></div>
 <div class="drw" id="pd-drw">
   <div class="drw-handle"></div>
@@ -767,7 +794,7 @@ body{height:100%;font-family:'Nunito',sans-serif;background:var(--bg);color:var(
 // ══════════════════════════════════════
 // STATE
 // ══════════════════════════════════════
-let DB={products:[],inbound:[],outbound:[],transfers:[],invoices:[],adjustments:[],categories:['Office','Safety','Tools','Packaging','Electronics','Cleaning','Other'],branches:['Main Branch','Warehouse A','Warehouse B'],departments:['Admin','Sales','Production','Warehouse','Logistics','Management','IT'],company:{},company2:{}};
+let DB={products:[],inbound:[],outbound:[],transfers:[],invoices:[],adjustments:[],categories:['Office','Safety','Tools','Packaging','Electronics','Cleaning','Other'],branches:['Main Branch','Warehouse A','Warehouse B'],departments:['Admin','Sales','Production','Warehouse','Logistics','Management','IT'],company:{},company2:{},lockPin:''};
 let GS_URL='';
 let APP_ENV='prod';
 let editPId=null,ivItems=[];
@@ -944,6 +971,7 @@ async function loadFromGS(){
       if(res.settings.categories)DB.categories=res.settings.categories.split('|').filter(Boolean);
       if(res.settings.branches)DB.branches=res.settings.branches.split('|').filter(Boolean);
       if(res.settings.departments)DB.departments=res.settings.departments.split('|').filter(Boolean);
+      if(res.settings.lockPin!==undefined)DB.lockPin=res.settings.lockPin||'';
     }
     if(res.company){
       const savedLogo=DB.company.logo||localStorage.getItem('wp_logo')||'';
@@ -986,7 +1014,7 @@ async function saveToGS(){
       outbound:DB.outbound,
       transfers:DB.transfers,
       invoices:DB.invoices,
-      settings:{categories:DB.categories.join('|'),branches:DB.branches.join('|')},
+      settings:{categories:DB.categories.join('|'),branches:DB.branches.join('|'),departments:(DB.departments||[]).join('|'),lockPin:DB.lockPin||''},
       company:(()=>{const c={...DB.company};delete c.logo;return c;})(),
       company2:(()=>{const c={...DB.company2};delete c.logo;return c;})()
     };
@@ -1117,13 +1145,96 @@ function changeUrl(){
 // ══════════════════════════════════════
 // NAVIGATION
 // ══════════════════════════════════════
-function goTo(p){
+function _goTo(p){
   document.querySelectorAll('.pg').forEach(g=>g.classList.remove('on'));
   document.querySelectorAll('.bn').forEach(b=>b.classList.remove('on'));
   const g=document.getElementById('pg-'+p);if(g)g.classList.add('on');
   const b=document.querySelector(`.bn[data-p="${p}"]`);if(b)b.classList.add('on');
   document.getElementById('pg-title').textContent=titles[p]||p;
-  ({dashboard:renderDash,products:renderProds,stock:()=>{fillDs();renderStk();},install:()=>{},backup:()=>{renderBackupPage();},adjustments:()=>{fillAdjDropdowns();renderAdjList();showAdjStock();const el=document.getElementById('adj-no');if(el&&!el.value)el.value=autoNo('ADJ',DB.adjustments);},inbound:()=>{fillDs();renderIbList();const el=document.getElementById('ib-no');if(el&&!el.value)el.value=autoNo('IN',DB.inbound);},outbound:()=>{fillDs();renderObList();const el=document.getElementById('ob-no');if(el&&!el.value)el.value=autoNo('OUT',DB.outbound);},transfer:()=>{fillDs();renderTrList();const el=document.getElementById('tr-no');if(el&&!el.value)el.value=autoNo('TRF',DB.transfers);},invoice:()=>{fillDs();if(!ivInited){ivInited=true;const set=(k,v)=>{const el=document.getElementById(k);if(el)el.value=v;};set('iv-no',nextNo());set('iv-date',td());set('iv-due',addD(td(),30));set('iv-type','TAX INVOICE');set('iv-gst','0.10');set('iv-status','pending');}renderIvF();checkIvStock();},invoices:renderInvHist,categories:renderCats,branches:renderBranches,departments:()=>{renderDepts();},company:()=>{activeCompanySettings='company';loadCo();},more:()=>{updateEnvBadge();}})[p]?.();
+  ({dashboard:renderDash,products:renderProds,stock:()=>{fillDs();renderStk();},install:()=>{},backup:()=>{renderBackupPage();},adjustments:()=>{fillAdjDropdowns();renderAdjList();showAdjStock();const el=document.getElementById('adj-no');if(el&&!el.value)el.value=autoNo('ADJ',DB.adjustments);},inbound:()=>{fillDs();renderIbList();const el=document.getElementById('ib-no');if(el&&!el.value)el.value=autoNo('IN',DB.inbound);},outbound:()=>{fillDs();renderObList();const el=document.getElementById('ob-no');if(el&&!el.value)el.value=autoNo('OUT',DB.outbound);},transfer:()=>{fillDs();renderTrList();const el=document.getElementById('tr-no');if(el&&!el.value)el.value=autoNo('TRF',DB.transfers);},invoice:()=>{fillDs();if(!ivInited){ivInited=true;const set=(k,v)=>{const el=document.getElementById(k);if(el)el.value=v;};set('iv-no',nextNo());set('iv-date',td());set('iv-due',addD(td(),30));set('iv-type','TAX INVOICE');set('iv-gst','0.10');set('iv-status','pending');}renderIvF();checkIvStock();},invoices:renderInvHist,categories:renderCats,branches:renderBranches,departments:()=>{renderDepts();},company:()=>{activeCompanySettings='company';loadCo();},more:()=>{updateEnvBadge();updateLockStatusSub();}})[p]?.();
+}
+
+
+// ==========================================
+// APP LOCK (simple PIN protection)
+// ==========================================
+const PROTECTED_PAGES=['invoice','invoices','more'];
+let appUnlocked=sessionStorage.getItem('wp_unlocked')==='1';
+let pendingPage=null;
+
+function goTo(p){
+  if(PROTECTED_PAGES.includes(p)&&DB.lockPin&&!appUnlocked){
+    pendingPage=p;
+    showPinGate();
+    return;
+  }
+  _goTo(p);
+}
+
+function showPinGate(){
+  document.getElementById('pin-gate-input').value='';
+  document.getElementById('pin-error').style.display='none';
+  document.getElementById('pin-ov').classList.add('open');
+  setTimeout(()=>{document.getElementById('pin-drw').classList.add('open');document.getElementById('pin-gate-input').focus();},10);
+}
+
+function closePinGate(){
+  document.getElementById('pin-drw').classList.remove('open');
+  document.getElementById('pin-ov').classList.remove('open');
+  pendingPage=null;
+}
+
+function submitPin(){
+  const entered=document.getElementById('pin-gate-input').value;
+  if(entered&&entered===DB.lockPin){
+    appUnlocked=true;
+    sessionStorage.setItem('wp_unlocked','1');
+    document.getElementById('pin-drw').classList.remove('open');
+    document.getElementById('pin-ov').classList.remove('open');
+    const target=pendingPage;pendingPage=null;
+    if(target)_goTo(target);
+  }else{
+    document.getElementById('pin-error').style.display='block';
+    document.getElementById('pin-gate-input').value='';
+    document.getElementById('pin-gate-input').focus();
+  }
+}
+
+function updateLockStatusSub(){
+  const el=document.getElementById('lock-status-sub');
+  if(el)el.textContent=DB.lockPin?'\u2705 Enabled \u2014 protecting Invoice & More':'Protect Invoice & More with a PIN';
+}
+
+function openLockSettings(){
+  document.getElementById('lock-pin-input').value=DB.lockPin||'';
+  document.getElementById('lock-ov').classList.add('open');
+  setTimeout(()=>document.getElementById('lock-drw').classList.add('open'),10);
+}
+
+function closeLockSettings(){
+  document.getElementById('lock-drw').classList.remove('open');
+  document.getElementById('lock-ov').classList.remove('open');
+}
+
+function saveLockPin(){
+  const pin=document.getElementById('lock-pin-input').value.trim();
+  if(!pin){alert('Please enter a PIN, or use Remove PIN to disable the lock.');return;}
+  DB.lockPin=pin;
+  appUnlocked=true;
+  sessionStorage.setItem('wp_unlocked','1');
+  scheduleSave();
+  updateLockStatusSub();
+  closeLockSettings();
+  alert('PIN saved! Invoice, Invoice History, and More are now protected.');
+}
+
+function removeLockPin(){
+  if(!confirm('Remove the PIN? Invoice & More will no longer be protected.'))return;
+  DB.lockPin='';
+  scheduleSave();
+  updateLockStatusSub();
+  closeLockSettings();
+  alert('PIN removed. Lock disabled.');
 }
 
 // ══════════════════════════════════════
@@ -1302,7 +1413,7 @@ async function backupToGSheet(){
       products:DB.products,inbound:DB.inbound,outbound:DB.outbound,
       transfers:DB.transfers,invoices:DB.invoices.map(r=>Object.assign({},r,{itemsJson:r.itemsJson||JSON.stringify((r.items||[]).map(it=>({prodId:it.prodId||'',sku:it.sku||'',desc:it.desc||'',qty:it.qty||0,price:it.price||0})))})),
       adjustments:DB.adjustments,
-      settings:{categories:DB.categories.join('|'),branches:DB.branches.join('|'),departments:(DB.departments||[]).join('|')},
+      settings:{categories:DB.categories.join('|'),branches:DB.branches.join('|'),departments:(DB.departments||[]).join('|'),lockPin:DB.lockPin||''},
       company:(()=>{const c=Object.assign({},DB.company);delete c.logo;return c;})(),
       company2:(()=>{const c=Object.assign({},DB.company2);delete c.logo;return c;})()
     };
@@ -1820,7 +1931,7 @@ function renderInv(){
         +'<div class="idoc-logo-cell">'+logoHtml+'</div>'
         +'<div style="text-align:right">'
           +'<div class="idoc-type">'+type+'</div>'
-          +'<div class="idoc-meta" style="margin:5px 0">No: <strong>'+no+'</strong><br>Date: <strong>'+fD(date)+'</strong><br>Due: <strong>'+fD(due)+'</strong></div>'
+          +'<div class="idoc-meta">No: <strong>'+no+'</strong><br>Date: <strong>'+fD(date)+'</strong><br>Due: <strong>'+fD(due)+'</strong></div>'
           +'<span class="idoc-st '+sCls+'">'+sLbl+'</span>'
         +'</div>'
       +'</div>'
@@ -1920,7 +2031,7 @@ function saveInvRec(){
   const msg=obCount>0?'Invoice saved!\n✅ '+obCount+' outbound record(s) auto-created for branch: '+invBranch:invBranch?'Invoice saved! (No product lines to record as outbound.)':'Invoice saved!\n⚠️ No branch selected — outbound stock not recorded.';
   alert(msg);
 }
-function printInv(){renderInv();const c=document.getElementById('invprev').outerHTML;const w=window.open('','_blank');w.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Invoice</title><style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:system-ui,sans-serif;background:#fff}.idoc-stripe{height:4px;background:linear-gradient(90deg,#1e3a8a,#3b82f6,#93c5fd)}.idoc-head{padding:16px 18px 12px;border-bottom:1px solid #e2e8f0}.idoc-logo{height:100%;width:auto;max-width:100%;object-fit:contain;object-position:left top;display:block}.idoc-logo-cell{display:flex;align-items:stretch;justify-content:flex-start;overflow:hidden}.idoc-toprow{display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:stretch}.idoc-co{font-size:14px;font-weight:900;color:#0f172a}.idoc-det{font-size:9.5px;color:#64748b;line-height:1.8;margin-top:3px}.idoc-type{font-size:14px;font-weight:900;color:#1e3a8a;text-align:right}.idoc-meta{font-size:9px;color:#64748b;text-align:right;margin-top:4px;line-height:1.8}.idoc-meta strong{color:#0f172a;font-family:monospace}.idoc-st{display:inline-block;padding:2px 8px;border-radius:20px;font-size:8.5px;font-weight:800}.st-paid{background:#dcfce7;color:#16a34a}.st-due{background:#fef3c7;color:#d97706}.st-pending{background:#e0e7ff;color:#4338ca}.idoc-parties{display:grid;grid-template-columns:1fr 1fr;border-bottom:1px solid #e2e8f0}.idoc-party{padding:10px 18px}.idoc-party.buyer{border-left:1px solid #e2e8f0}.idoc-ptag{font-size:7.5px;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:#94a3b8;margin-bottom:3px}.idoc-pname{font-size:11px;font-weight:800;color:#0f172a;margin-bottom:2px}.idoc-pdet{font-size:9px;color:#64748b;line-height:1.7}.idoc-tbl{width:100%;border-collapse:collapse;font-size:9.5px}.idoc-tbl thead tr{border-bottom:2px solid #0f172a}.idoc-tbl th{padding:6px 8px;text-align:left;font-size:7.5px;font-weight:800;color:#94a3b8;text-transform:uppercase}.idoc-tbl th:nth-child(n+3){text-align:right}.idoc-tbl td{padding:7px 8px;border-bottom:1px solid #f1f5f9;color:#334155}.idoc-tbl td:nth-child(n+3){text-align:right;font-family:monospace;font-size:9px}.idoc-tbl tbody tr:last-child td{border-bottom:none}.idoc-tbl tfoot td{border-top:1px solid #e2e8f0;padding:5px 8px;color:#64748b;font-size:9px}.idoc-grand td{background:#0f172a;color:#fff;font-weight:800;font-size:10px;padding:8px}.idoc-grand td:last-child{font-family:monospace;font-size:12px;color:#93c5fd;text-align:right}.idoc-notes{background:#f8fafc;padding:8px 18px;font-size:9px;color:#64748b;line-height:1.7}.idoc-ntag{font-size:7.5px;font-weight:800;text-transform:uppercase;color:#94a3b8;margin-bottom:2px}.idoc-foot{background:#0f172a;padding:7px 18px;display:flex;justify-content:space-between;font-size:8.5px;color:#475569}.idoc-fco{color:#94a3b8;font-weight:700}@page{margin:6mm;size:A4}</style></head><body>'+c+'<script>window.onload=()=>window.print()<\/script></body></html>');w.document.close();}
+function printInv(){renderInv();const c=document.getElementById('invprev').outerHTML;const w=window.open('','_blank');w.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Invoice</title><style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:system-ui,sans-serif;background:#fff}.idoc-stripe{height:4px;background:linear-gradient(90deg,#1e3a8a,#3b82f6,#93c5fd)}.idoc-head{padding:9px 18px 12px;border-bottom:1px solid #e2e8f0}.idoc-logo{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;object-position:left top;display:block}.idoc-logo-cell{position:relative;overflow:hidden}.idoc-toprow{display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:stretch}.idoc-co{font-size:14px;font-weight:900;color:#0f172a}.idoc-det{font-size:9.5px;color:#64748b;line-height:1.8;margin-top:3px}.idoc-type{font-size:12px;font-weight:900;color:#1e3a8a;text-align:right}.idoc-meta{font-size:9px;color:#64748b;text-align:right;margin-top:3px;line-height:1.45}.idoc-meta strong{color:#0f172a;font-family:monospace}.idoc-st{display:inline-block;margin-top:3px;padding:2px 8px;border-radius:20px;font-size:8.5px;font-weight:800}.st-paid{background:#dcfce7;color:#16a34a}.st-due{background:#fef3c7;color:#d97706}.st-pending{background:#e0e7ff;color:#4338ca}.idoc-parties{display:grid;grid-template-columns:1fr 1fr;border-bottom:1px solid #e2e8f0}.idoc-party{padding:10px 18px}.idoc-party.buyer{border-left:1px solid #e2e8f0}.idoc-ptag{font-size:7.5px;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:#94a3b8;margin-bottom:3px}.idoc-pname{font-size:11px;font-weight:800;color:#0f172a;margin-bottom:2px}.idoc-pdet{font-size:9px;color:#64748b;line-height:1.7}.idoc-tbl{width:100%;border-collapse:collapse;font-size:9.5px}.idoc-tbl thead tr{border-bottom:2px solid #0f172a}.idoc-tbl th{padding:6px 8px;text-align:left;font-size:7.5px;font-weight:800;color:#94a3b8;text-transform:uppercase}.idoc-tbl th:nth-child(n+3){text-align:right}.idoc-tbl td{padding:7px 8px;border-bottom:1px solid #f1f5f9;color:#334155}.idoc-tbl td:nth-child(n+3){text-align:right;font-family:monospace;font-size:9px}.idoc-tbl tbody tr:last-child td{border-bottom:none}.idoc-tbl tfoot td{border-top:1px solid #e2e8f0;padding:5px 8px;color:#64748b;font-size:9px}.idoc-grand td{background:#0f172a;color:#fff;font-weight:800;font-size:10px;padding:8px}.idoc-grand td:last-child{font-family:monospace;font-size:12px;color:#93c5fd;text-align:right}.idoc-notes{background:#f8fafc;padding:8px 18px;font-size:9px;color:#64748b;line-height:1.7}.idoc-ntag{font-size:7.5px;font-weight:800;text-transform:uppercase;color:#94a3b8;margin-bottom:2px}.idoc-foot{background:#0f172a;padding:7px 18px;display:flex;justify-content:space-between;font-size:8.5px;color:#475569}.idoc-fco{color:#94a3b8;font-weight:700}@page{margin:6mm;size:A4}</style></head><body>'+c+'<script>window.onload=()=>window.print()<\/script></body></html>');w.document.close();}
 function renderInvHist(){
   const filtered=filterByYear(DB.invoices).slice().reverse();
   const yearNote=DB.invoices.length>0&&filtered.length===0
